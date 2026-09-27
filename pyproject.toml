@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "goemotions-ml-assignment"
+version = "0.1.0"
+description = "Machine Learning Course Assignment - GoEmotions"
+readme = "README.md"
+authors = [
+  { name="Group Members" }
+]
+requires-python = ">=3.8"
+dependencies = [
+    "datasets",
+    "transformers",
+    "scikit-learn",
+    "pandas",
+    "numpy",
+    "matplotlib",
+    "seaborn",
+    "h5py",
+    "gensim",
+    "torch",
+    "nltk"
+]
+
+[tool.setuptools]
+packages = ["modules"]
