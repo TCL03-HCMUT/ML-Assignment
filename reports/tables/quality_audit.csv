@@ -1,0 +1,4 @@
+split,rows,missing_text,blank_text,missing_id,duplicate_ids,exact_duplicate_excess,normalized_duplicate_excess,conflicting_text_groups
+train,43410,0,0,0,0,183,221,62
+validation,5426,0,0,0,0,3,5,2
+test,5427,0,0,0,0,6,6,1

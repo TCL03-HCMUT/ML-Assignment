@@ -1,0 +1,48 @@
+{
+  "provider": "huggingface",
+  "dataset_id": "google-research-datasets/go_emotions",
+  "config": "simplified",
+  "revision": "add492243ff905527e67aeb8b80c082af02207c3",
+  "source_url": "https://huggingface.co/datasets/google-research-datasets/go_emotions/tree/add492243ff905527e67aeb8b80c082af02207c3",
+  "label_names": [
+    "admiration",
+    "amusement",
+    "anger",
+    "annoyance",
+    "approval",
+    "caring",
+    "confusion",
+    "curiosity",
+    "desire",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "excitement",
+    "fear",
+    "gratitude",
+    "grief",
+    "joy",
+    "love",
+    "nervousness",
+    "optimism",
+    "pride",
+    "realization",
+    "relief",
+    "remorse",
+    "sadness",
+    "surprise",
+    "neutral"
+  ],
+  "splits": {
+    "train": {
+      "rows": 43410
+    },
+    "validation": {
+      "rows": 5426
+    },
+    "test": {
+      "rows": 5427
+    }
+  }
+}

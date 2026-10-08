@@ -1,0 +1,4 @@
+split,rows,mean_tokens,empty_fallback_rows
+train,43410,14.964777700990556,0
+validation,5426,14.906192406929598,0
+test,5427,14.830108715680854,0
