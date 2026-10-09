@@ -1,0 +1,5 @@
+profile,mean_tokens,vocabulary,changed_comments,empty_fallback_rows
+emotion_preserving,14.964777700990556,27241,41503,0
+stopwords_ablation,8.785901865929509,26953,43325,16
+punctuation_ablation,12.945542501727713,27199,42689,2
+embedding_minimal,14.96857866850956,34048,2732,0

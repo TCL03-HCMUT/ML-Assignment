@@ -1,0 +1,9 @@
+{
+  "train_word_tokens": 557515,
+  "train_lexical_vocabulary": 26939,
+  "content_vocabulary": 26649,
+  "stopword_token_fraction": 0.49492659390330307,
+  "iqr_upper_word_threshold": 34.5,
+  "long_comment_flags": 0,
+  "max_label_prevalence_drift_pp": 0.7235835750517554
+}

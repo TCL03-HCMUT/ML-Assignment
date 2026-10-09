@@ -1,0 +1,70 @@
+{
+  "label_names": [
+    "admiration",
+    "amusement",
+    "anger",
+    "annoyance",
+    "approval",
+    "caring",
+    "confusion",
+    "curiosity",
+    "desire",
+    "disappointment",
+    "disapproval",
+    "disgust",
+    "embarrassment",
+    "excitement",
+    "fear",
+    "gratitude",
+    "grief",
+    "joy",
+    "love",
+    "nervousness",
+    "optimism",
+    "pride",
+    "realization",
+    "relief",
+    "remorse",
+    "sadness",
+    "surprise",
+    "neutral"
+  ],
+  "config": {
+    "lowercase": true,
+    "remove_punctuation": false,
+    "remove_stopwords": false,
+    "normalize_unicode": true,
+    "decode_html": true,
+    "replace_urls": true,
+    "replace_users": true,
+    "preserve_negation": true,
+    "tokenizer": "regex",
+    "empty_token": "EMPTYTOKEN",
+    "remove_numbers": false,
+    "stemming": false,
+    "lemmatization": false,
+    "min_word_length": 1
+  },
+  "split_policy": "official; repeated text retained and audited",
+  "impact": [
+    {
+      "split": "train",
+      "rows": 43410,
+      "mean_tokens": 14.964777700990556,
+      "empty_fallback_rows": 0
+    },
+    {
+      "split": "validation",
+      "rows": 5426,
+      "mean_tokens": 14.906192406929598,
+      "empty_fallback_rows": 0
+    },
+    {
+      "split": "test",
+      "rows": 5427,
+      "mean_tokens": 14.830108715680854,
+      "empty_fallback_rows": 0
+    }
+  ],
+  "artifacts_are": "raw/processed text, tokens and multi-hot labels; model tokenization/padding handled downstream"
+}

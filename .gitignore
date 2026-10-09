@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+.cache/
+data/raw/*.tsv
+data/raw/emotions.txt
+data/raw/huggingface/
+data/processed/
+features/*_labels.npy

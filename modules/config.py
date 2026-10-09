@@ -49,8 +49,17 @@ class PreprocessingConfig:
     """
 
     lowercase: bool = True
-    remove_punctuation: bool = True
-    remove_stopwords: bool = True
+    remove_punctuation: bool = False # to keep punctuation (e.g. "happy! vs happy!!!")
+    remove_stopwords: bool = False   # to keep common stopwords (e.g. "the", "and"). may be change later
+
+    normalize_unicode: bool = True   # to normalize unicode characters (e.g. ế can be represented 2 ways in NFD. normalize that)
+    decode_html: bool = True         # to decode HTML (e.g. &amp; -> &)
+    replace_urls: bool = True       # to replace URLs with a placeholder token (e.g. "http://example.com" -> "URLTOKEN")
+    replace_users: bool = True      # to replace user mentions with a placeholder token (e.g. "@user" -> "USERTOKEN")
+    preserve_negation: bool = True   # if remove_stopwords, this will help keep negation (e.g. "not", "no")
+    tokenizer: str = "regex"         # regex | whitespace
+    empty_token: str = "EMPTYTOKEN"  # to replace empty tokens with a placeholder
+
     remove_numbers: bool = False
     stemming: bool = False          # Use Porter Stemmer
     lemmatization: bool = False     # Use WordNet Lemmatizer (mutually exclusive with stemming)
