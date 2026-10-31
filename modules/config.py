@@ -123,10 +123,11 @@ class ModernFeatureConfig:
     """
 
     embedding_type: str = "word2vec"          # 'word2vec' | 'glove' | 'bert'
-    model_name: str = "bert-base-uncased"     # HuggingFace model identifier
+    model_name: Optional[str] = None          # 'word2vec-google-news-300', 'glove-wiki-gigaword-100', or 'bert-base-uncased'
     pooling_strategy: str = "mean"            # 'mean' | 'cls'
     save_format: str = "npy"                  # 'npy' | 'h5'
     features_dir: str = FEATURES_DIR
+    normalize_embeddings: bool = False        # Whether to apply L2 normalization to embeddings
 
 
 # ──────────────────────────────────────────────
