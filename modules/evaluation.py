@@ -1,17 +1,17 @@
-"""
-Module: Evaluation
-Metrics computation, per-class analysis, and pipeline comparison plots.
-
-Options are driven by an `EvaluationConfig` object.
+"""Module: Evaluation
+Metrics computation, per-class analysis, threshold tuning, and visualization.
 """
 
+from typing import Dict, List, Optional
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     f1_score,
-    accuracy_score,
+    hamming_loss,
     multilabel_confusion_matrix,
     precision_score,
     recall_score,
@@ -20,113 +20,152 @@ from sklearn.metrics import (
 from modules.config import EvaluationConfig, LABEL_NAMES
 
 
-# ──────────────────────────────────────────────
-#  Core Metrics
-# ──────────────────────────────────────────────
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, config: Optional[EvaluationConfig] = None) -> Dict[str, float]:
+    cfg = config or EvaluationConfig()
+    metrics = {
+        "subset_accuracy": float(accuracy_score(y_true, y_pred)),
+        "hamming_loss": float(hamming_loss(y_true, y_pred)),
+    }
 
-def compute_metrics(y_true, y_pred, config: EvaluationConfig = None):
-    """
-    Computes a suite of evaluation metrics for multi-label classification.
+    for avg in cfg.average_types:
+        metrics[f"f1_{avg}"] = float(f1_score(y_true, y_pred, average=avg, zero_division=0))
+        metrics[f"precision_{avg}"] = float(precision_score(y_true, y_pred, average=avg, zero_division=0))
+        metrics[f"recall_{avg}"] = float(recall_score(y_true, y_pred, average=avg, zero_division=0))
 
-    Implementation Guide:
-    1. Default to `EvaluationConfig()` if `config` is None.
-    2. Compute subset accuracy: `accuracy_score(y_true, y_pred)`.
-    3. For each average type in `config.average_types`, compute:
-       - `f1_score(y_true, y_pred, average=avg, zero_division=0)`.
-       - `precision_score(y_true, y_pred, average=avg, zero_division=0)`.
-       - `recall_score(y_true, y_pred, average=avg, zero_division=0)`.
-    4. If `config.show_classification_report`:
-       - `report = classification_report(y_true, y_pred, target_names=LABEL_NAMES, zero_division=0)`.
-       - `print(report)`.
-    5. Return a dict: `{'subset_accuracy': ..., 'f1_micro': ..., 'f1_macro': ..., ...}`.
+    if cfg.show_classification_report:
+        n_classes = y_true.shape[1]
+        target_names = LABEL_NAMES[:n_classes] if n_classes <= len(LABEL_NAMES) else None
+        print("\n=== Classification Report ===")
+        print(classification_report(y_true, y_pred, target_names=target_names, zero_division=0))
 
-    Args:
-        y_true (np.ndarray): Ground truth binary matrix (N, 28).
-        y_pred (np.ndarray): Predicted binary matrix (N, 28).
-        config (EvaluationConfig | None): Configuration.
-    Returns:
-        dict: Computed metrics.
-    """
-    pass
+    return metrics
 
 
-def compute_per_class_f1(y_true, y_pred):
-    """
-    Computes the F1-score for each of the 28 emotion classes individually.
-
-    Implementation Guide:
-    1. `per_class = f1_score(y_true, y_pred, average=None, zero_division=0)`.
-    2. Return a dict mapping `LABEL_NAMES[i] -> per_class[i]`.
-
-    Args:
-        y_true (np.ndarray): Ground truth.
-        y_pred (np.ndarray): Predictions.
-    Returns:
-        dict[str, float]: Per-class F1 scores.
-    """
-    pass
+def compute_per_class_f1(y_true: np.ndarray, y_pred: np.ndarray, class_names: Optional[List[str]] = None) -> Dict[str, float]:
+    names = class_names or LABEL_NAMES[:y_true.shape[1]]
+    scores = f1_score(y_true, y_pred, average=None, zero_division=0)
+    return {name: float(scores[i]) for i, name in enumerate(names)}
 
 
-# ──────────────────────────────────────────────
-#  Visualisation
-# ──────────────────────────────────────────────
+def plot_per_class_f1(y_true: np.ndarray, y_pred: np.ndarray, config: Optional[EvaluationConfig] = None, class_names: Optional[List[str]] = None):
+    scores = compute_per_class_f1(y_true, y_pred, class_names=class_names)
+    series = pd.Series(scores).sort_values()
 
-def plot_per_class_f1(y_true, y_pred, config: EvaluationConfig = None):
-    """
-    Plots a horizontal bar chart of per-class F1 scores.
+    top_n = config.top_n_classes if config else None
+    if top_n is not None and top_n < len(series):
+        series = series.iloc[-top_n:]
 
-    Implementation Guide:
-    1. Call `compute_per_class_f1(y_true, y_pred)`.
-    2. Sort the classes by F1 (ascending for horizontal bars).
-    3. If `config.top_n_classes` is set, show only the top/bottom N.
-    4. Plot with `plt.barh`.
-    5. Add title and axis labels.
+    fig, ax = plt.subplots(figsize=(8, max(4, len(series) * 0.28)))
+    bars = ax.barh(series.index, series.values, color="steelblue", edgecolor="black", alpha=0.85)
+    ax.set_xlim(0, 1.0)
+    ax.set_xlabel("F1-Score")
+    ax.set_title("Per-Class F1 Score")
+    ax.grid(axis="x", linestyle="--", alpha=0.4)
 
-    Args:
-        y_true (np.ndarray): Ground truth.
-        y_pred (np.ndarray): Predictions.
-        config (EvaluationConfig | None): Configuration.
-    """
-    pass
+    for bar in bars:
+        w = bar.get_width()
+        ax.text(w + 0.01, bar.get_y() + bar.get_height() / 2, f"{w:.2f}", va="center", fontsize=8)
 
-
-def plot_confusion_matrix(y_true, y_pred, class_names=None):
-    """
-    Plots per-label confusion matrices for the top-N most frequent classes.
-
-    Implementation Guide:
-    1. `mcm = multilabel_confusion_matrix(y_true, y_pred)`.
-    2. Default `class_names` to `LABEL_NAMES`.
-    3. Pick the top N classes by support (sum of y_true columns).
-    4. For each selected class, plot a 2x2 heatmap subplot using `sns.heatmap`.
-    5. Title each subplot with the class name.
-
-    Args:
-        y_true (np.ndarray): Ground truth.
-        y_pred (np.ndarray): Predictions.
-        class_names (list | None): Label names.
-    """
-    pass
+    plt.tight_layout()
+    return fig
 
 
-def compare_pipelines(results_dict):
-    """
-    Plots a grouped bar chart comparing metrics across pipelines.
+def plot_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray, class_names: Optional[List[str]] = None, top_n: int = 6):
+    names = class_names or LABEL_NAMES[:y_true.shape[1]]
+    support = y_true.sum(axis=0)
+    top_indices = np.argsort(support)[::-1][:top_n]
 
-    Implementation Guide:
-    1. `results_dict` format:
-       ```
-       {
-           'TF-IDF + LogReg': {'f1_micro': 0.45, 'f1_macro': 0.30},
-           'BERT Frozen + MLP': {'f1_micro': 0.50, 'f1_macro': 0.38},
-           'DistilBERT E2E': {'f1_micro': 0.60, 'f1_macro': 0.48},
-       }
-       ```
-    2. For each metric, create a grouped bar using `np.arange` offsets.
-    3. Add legend, title, axis labels.
-    4. Use `plt.tight_layout()`.
+    mcm = multilabel_confusion_matrix(y_true, y_pred)
+    cols = 3
+    rows = int(np.ceil(len(top_indices) / cols))
 
-    Args:
-        results_dict (dict[str, dict[str, float]]): Pipeline name → metric dict.
-    """
-    pass
+    fig, axes = plt.subplots(rows, cols, figsize=(cols * 3.5, rows * 3.0))
+    axes = np.array(axes).reshape(-1)
+
+    for i, idx in enumerate(top_indices):
+        cm = mcm[idx]
+        ax = axes[i]
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, ax=ax,
+                    xticklabels=["Neg", "Pos"], yticklabels=["Neg", "Pos"])
+        ax.set_title(f"{names[idx]} (N={support[idx]})", fontsize=10)
+        ax.set_ylabel("True")
+        ax.set_xlabel("Predicted")
+
+    for j in range(len(top_indices), len(axes)):
+        fig.delaxes(axes[j])
+
+    plt.suptitle(f"Top {len(top_indices)} Classes Confusion Matrices", y=1.02, fontsize=12)
+    plt.tight_layout()
+    return fig
+
+
+def compare_pipelines(results_dict: Dict[str, Dict[str, float]], metrics: Optional[List[str]] = None):
+    metric_keys = metrics or ["f1_micro", "f1_macro", "subset_accuracy"]
+    df = pd.DataFrame(results_dict).T
+    available = [m for m in metric_keys if m in df.columns]
+
+    fig, ax = plt.subplots(figsize=(max(8, len(df) * 1.5), 4.5))
+    df[available].plot(kind="bar", ax=ax, edgecolor="black", alpha=0.85)
+    ax.set_ylabel("Score")
+    ax.set_ylim(0, 1.0)
+    ax.set_title("Pipeline Architecture Comparison")
+    ax.legend(title="Metric", bbox_to_anchor=(1.02, 1), loc="upper left")
+    plt.xticks(rotation=25, ha="right")
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+    plt.tight_layout()
+    return fig
+
+
+def find_best_thresholds(y_true: np.ndarray, y_probs: np.ndarray, candidates: Optional[np.ndarray] = None) -> np.ndarray:
+    cand = candidates if candidates is not None else np.linspace(0.1, 0.9, 17)
+    n_classes = y_true.shape[1]
+    best_thresholds = np.full(n_classes, 0.5)
+
+    for c in range(n_classes):
+        y_c = y_true[:, c]
+        p_c = y_probs[:, c]
+        best_score, best_th = -1.0, 0.5
+        for th in cand:
+            pred_c = (p_c >= th).astype(int)
+            score = f1_score(y_c, pred_c, zero_division=0)
+            if score > best_score:
+                best_score = score
+                best_th = th
+        best_thresholds[c] = best_th
+
+    return best_thresholds
+
+
+def apply_thresholds(y_probs: np.ndarray, thresholds: np.ndarray) -> np.ndarray:
+    return (y_probs >= thresholds).astype(int)
+
+
+def plot_results_heatmap(results_df: pd.DataFrame, index: str = "model", columns: str = "features",
+                         value: str = "f1_micro", title: Optional[str] = None):
+    pivot = results_df.pivot_table(index=index, columns=columns, values=value)
+    fig, ax = plt.subplots(figsize=(max(6, len(pivot.columns) * 1.8), max(5, len(pivot) * 0.35)))
+    sns.heatmap(pivot, annot=True, fmt=".3f", cmap="YlGnBu", cbar=True, ax=ax, linewidths=0.5)
+    ax.set_title(title or f"{value.upper()} Comparison")
+    plt.tight_layout()
+    return fig
+
+
+def plot_top_configurations(results_df: pd.DataFrame, label_cols: List[str] = ["features", "model"],
+                            metric: str = "f1_micro", top_n: int = 10, title: Optional[str] = None):
+    df = results_df.copy()
+    df["label"] = df[label_cols].astype(str).agg(" | ".join, axis=1)
+    df = df.sort_values(metric, ascending=False).head(top_n).sort_values(metric, ascending=True)
+
+    fig, ax = plt.subplots(figsize=(8.5, max(4, top_n * 0.35)))
+    bars = ax.barh(df["label"], df[metric], color="teal", edgecolor="black", alpha=0.85)
+    ax.set_xlim(0, 1.0)
+    ax.set_xlabel(metric.upper())
+    ax.set_title(title or f"Top {top_n} Configurations by {metric.upper()}")
+    ax.grid(axis="x", linestyle="--", alpha=0.4)
+
+    for bar in bars:
+        w = bar.get_width()
+        ax.text(w + 0.01, bar.get_y() + bar.get_height() / 2, f"{w:.3f}", va="center", fontsize=8)
+
+    plt.tight_layout()
+    return fig

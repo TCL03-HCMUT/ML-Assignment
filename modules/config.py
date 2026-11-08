@@ -136,29 +136,15 @@ class ModernFeatureConfig:
 
 @dataclass
 class ClassifierConfig:
-    """Controls the classifier that trains on ANY feature array (traditional or modern).
+    """Controls the classifier that trains on ANY feature array (traditional or modern)."""
 
-    Both `TraditionalFeatureExtractor` and `ModernFeatureExtractor` produce
-    numpy arrays of shape (N, D).  This single classifier consumes them.
-
-    Implementation Guide:
-    - `classifier_type`: One of 'logistic_regression', 'svm', 'random_forest',
-      'naive_bayes', 'mlp'.
-    - `tuning_method`: One of 'grid', 'random', or None to skip tuning.
-
-    Example usage in notebook:
-        # Same classifier, different features
-        clf_cfg = ClassifierConfig(classifier_type='svm', tuning_method='grid')
-
-        clf_trad = Classifier(clf_cfg)
-        clf_trad.train(X_tfidf_train, y_train)
-
-        clf_modern = Classifier(clf_cfg)
-        clf_modern.train(X_bert_train, y_train)
-    """
-
-    classifier_type: str = "logistic_regression"  # 'logistic_regression' | 'svm' | 'random_forest' | 'naive_bayes' | 'mlp'
-    tuning_method: Optional[str] = None           # 'grid' | 'random' | None
+    classifier_type: str = "logistic_regression"
+    tuning_method: Optional[str] = None
+    multilabel_strategy: str = "ovr"  # 'ovr' | 'chain'
+    random_state: int = 42
+    cv_folds: int = 3
+    n_jobs: int = -1
+    threshold: float = 0.5
 
 
 # ──────────────────────────────────────────────
@@ -167,23 +153,7 @@ class ClassifierConfig:
 
 @dataclass
 class DLPipelineConfig:
-    """Controls end-to-end deep learning fine-tuning.
-
-    Implementation Guide:
-    - `model_name`: Any HuggingFace model that supports SequenceClassification.
-    - `max_length`: Maximum token length for the tokenizer.
-    - `batch_size`, `epochs`, `learning_rate`: Standard training hyperparameters.
-    - `threshold`: Sigmoid threshold for converting logits to binary predictions.
-
-    Example usage in notebook:
-        cfg = DLPipelineConfig(
-            model_name='distilbert-base-uncased',
-            epochs=5,
-            learning_rate=3e-5,
-            batch_size=32,
-        )
-        pipeline = EndToEndDLPipeline(cfg)
-    """
+    """Controls end-to-end deep learning fine-tuning."""
 
     model_name: str = "distilbert-base-uncased"
     max_length: int = 128
@@ -192,6 +162,7 @@ class DLPipelineConfig:
     learning_rate: float = 2e-5
     threshold: float = 0.5
     num_labels: int = NUM_LABELS
+    loss: str = "bce"  # 'bce' | 'bce_weighted'
 
 
 # ──────────────────────────────────────────────
