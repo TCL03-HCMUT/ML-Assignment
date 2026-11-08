@@ -1,6 +1,6 @@
 """Module: Classifier
 Multi-label classifier training on traditional or modern feature matrices.
-Supports linear models, Naive Bayes, tree ensembles, nearest neighbors, and MLPs.
+Supports core models: Logistic Regression, Decision Tree, Random Forest, MLP, SVM, Naive Bayes, KNN.
 """
 
 from dataclasses import dataclass
@@ -10,26 +10,13 @@ import pandas as pd
 from scipy import sparse
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain
-from sklearn.linear_model import (
-    LogisticRegression,
-    RidgeClassifier,
-    SGDClassifier,
-    PassiveAggressiveClassifier,
-    Perceptron,
-)
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
-from sklearn.calibration import CalibratedClassifierCV
-from sklearn.naive_bayes import MultinomialNB, ComplementNB, BernoulliNB
-from sklearn.ensemble import (
-    RandomForestClassifier,
-    ExtraTreesClassifier,
-    HistGradientBoostingClassifier,
-    AdaBoostClassifier,
-)
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neural_network import MLPClassifier
-from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import f1_score
 
@@ -57,66 +44,21 @@ def _registry() -> Dict[str, ClassifierSpec]:
         ClassifierSpec("svm", "linear", "fast", True, True, False, False,
                        "Linear Support Vector Classifier",
                        lambda rs: LinearSVC(max_iter=2000, random_state=rs)),
-        ClassifierSpec("svm_calibrated", "linear", "medium", True, True, False, False,
-                       "Probability-calibrated Linear SVC",
-                       lambda rs: CalibratedClassifierCV(LinearSVC(max_iter=2000, random_state=rs))),
-        ClassifierSpec("ridge", "linear", "fast", True, True, False, True,
-                       "Ridge Classifier with closed-form L2 solver",
-                       lambda rs: RidgeClassifier(random_state=rs)),
-        ClassifierSpec("sgd", "linear", "fast", True, True, False, False,
-                       "SGD with log-loss (logistic loss)",
-                       lambda rs: SGDClassifier(loss="log_loss", max_iter=1000, random_state=rs)),
-        ClassifierSpec("sgd_log", "linear", "fast", True, True, False, False,
-                       "SGD with log-loss (logistic loss)",
-                       lambda rs: SGDClassifier(loss="log_loss", max_iter=1000, random_state=rs)),
-        ClassifierSpec("sgd_hinge", "linear", "fast", True, True, False, False,
-                       "SGD with linear hinge loss (Linear SVM)",
-                       lambda rs: SGDClassifier(loss="hinge", max_iter=1000, random_state=rs)),
-        ClassifierSpec("passive_aggressive", "linear", "fast", True, True, False, False,
-                       "Passive-Aggressive online classifier",
-                       lambda rs: PassiveAggressiveClassifier(max_iter=1000, random_state=rs)),
-        ClassifierSpec("perceptron", "linear", "fast", True, True, False, False,
-                       "Classical Perceptron linear classifier",
-                       lambda rs: Perceptron(max_iter=1000, random_state=rs)),
-        ClassifierSpec("naive_bayes", "naive_bayes", "fast", True, True, True, False,
-                       "Multinomial Naive Bayes",
-                       lambda rs: MultinomialNB()),
-        ClassifierSpec("multinomial_nb", "naive_bayes", "fast", True, True, True, False,
-                       "Multinomial Naive Bayes",
-                       lambda rs: MultinomialNB()),
-        ClassifierSpec("complement_nb", "naive_bayes", "fast", True, True, True, False,
-                       "Complement Naive Bayes for imbalanced classes",
-                       lambda rs: ComplementNB()),
-        ClassifierSpec("bernoulli_nb", "naive_bayes", "fast", True, True, False, False,
-                       "Bernoulli Naive Bayes for binary features",
-                       lambda rs: BernoulliNB()),
-        ClassifierSpec("knn", "neighbors", "slow", True, True, False, True,
-                       "K-Nearest Neighbors (k=5)",
-                       lambda rs: KNeighborsClassifier(n_neighbors=5, n_jobs=-1)),
-        ClassifierSpec("nearest_centroid", "neighbors", "fast", True, True, False, False,
-                       "Nearest Centroid classification",
-                       lambda rs: NearestCentroid()),
-        ClassifierSpec("decision_tree", "tree_ensemble", "medium", True, True, False, True,
-                       "Decision Tree (max_depth=20)",
+        ClassifierSpec("decision_tree", "tree_ensemble", "fast", True, True, False, True,
+                       "Decision Tree Classifier",
                        lambda rs: DecisionTreeClassifier(max_depth=20, random_state=rs)),
         ClassifierSpec("random_forest", "tree_ensemble", "medium", True, True, False, True,
                        "Random Forest (100 trees)",
                        lambda rs: RandomForestClassifier(n_estimators=100, max_depth=25, random_state=rs, n_jobs=-1)),
-        ClassifierSpec("extra_trees", "tree_ensemble", "medium", True, True, False, True,
-                       "Extremely Randomized Trees (100 trees)",
-                       lambda rs: ExtraTreesClassifier(n_estimators=100, max_depth=25, random_state=rs, n_jobs=-1)),
-        ClassifierSpec("hist_gradient_boosting", "tree_ensemble", "medium", False, True, False, False,
-                       "Histogram-based Gradient Boosting",
-                       lambda rs: HistGradientBoostingClassifier(max_iter=50, random_state=rs)),
-        ClassifierSpec("adaboost", "tree_ensemble", "medium", True, True, False, False,
-                       "AdaBoost with decision stumps",
-                       lambda rs: AdaBoostClassifier(n_estimators=50, random_state=rs)),
+        ClassifierSpec("naive_bayes", "naive_bayes", "fast", True, True, True, False,
+                       "Multinomial Naive Bayes",
+                       lambda rs: MultinomialNB()),
+        ClassifierSpec("knn", "neighbors", "slow", True, True, False, True,
+                       "K-Nearest Neighbors (k=5)",
+                       lambda rs: KNeighborsClassifier(n_neighbors=5, n_jobs=-1)),
         ClassifierSpec("mlp", "neural", "medium", True, True, False, True,
-                       "Multi-Layer Perceptron (256, 128)",
-                       lambda rs: MLPClassifier(hidden_layer_sizes=(256, 128), max_iter=25, random_state=rs)),
-        ClassifierSpec("dummy", "baseline", "fast", True, True, False, True,
-                       "Prior-class Dummy Baseline",
-                       lambda rs: DummyClassifier(strategy="prior")),
+                       "Multi-Layer Perceptron (128,)",
+                       lambda rs: MLPClassifier(hidden_layer_sizes=(128,), max_iter=25, random_state=rs)),
     ]
     return {entry.name: entry for entry in entries}
 
@@ -161,24 +103,41 @@ def _build_classifier(config: ClassifierConfig):
         raise ValueError(f"Unsupported classifier_type '{model_name}'. Choose from: {list(CLASSIFIER_REGISTRY.keys())}")
 
     base = spec.builder(config.random_state)
-    strat = getattr(config, "multilabel_strategy", "ovr")
+    strat = getattr(config, "multilabel_strategy", "native")
 
     if strat == "chain":
         return ClassifierChain(base, random_state=config.random_state)
+    if strat == "ovr":
+        return OneVsRestClassifier(base, n_jobs=getattr(config, "n_jobs", -1))
+
+    # 'native' / 'auto': use native multi-label if supported, otherwise fallback to OvR
+    if spec.native_multilabel:
+        return base
     return OneVsRestClassifier(base, n_jobs=getattr(config, "n_jobs", -1))
 
 
 def _get_default_param_grid(config: ClassifierConfig) -> dict:
     t = config.classifier_type
-    prefix = "base_estimator__" if getattr(config, "multilabel_strategy", "ovr") == "chain" else "estimator__"
-    if t in ("logistic_regression", "svm", "svm_calibrated"):
+    spec = CLASSIFIER_REGISTRY.get(t)
+    strat = getattr(config, "multilabel_strategy", "native")
+
+    if strat == "chain":
+        prefix = "base_estimator__"
+    elif strat == "ovr" or not (spec and spec.native_multilabel):
+        prefix = "estimator__"
+    else:
+        prefix = ""  # Native multi-label has no wrapper prefix
+
+    if t in ("logistic_regression", "svm"):
         return {f"{prefix}C": [0.1, 0.5, 1.0, 2.0]}
-    if t in ("sgd", "sgd_log", "sgd_hinge"):
-        return {f"{prefix}alpha": [1e-5, 1e-4, 1e-3]}
-    if t in ("naive_bayes", "multinomial_nb", "complement_nb"):
+    if t == "naive_bayes":
         return {f"{prefix}alpha": [0.1, 0.5, 1.0]}
-    if t in ("random_forest", "extra_trees"):
-        return {f"{prefix}n_estimators": [50, 100]}
+    if t == "decision_tree":
+        return {f"{prefix}max_depth": [10, 20, 30]}
+    if t == "random_forest":
+        return {f"{prefix}n_estimators": [50, 100], f"{prefix}max_depth": [15, 25]}
+    if t == "knn":
+        return {f"{prefix}n_neighbors": [3, 5, 7]}
     if t == "mlp":
         return {f"{prefix}alpha": [1e-4, 1e-3]}
     return {}

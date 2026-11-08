@@ -140,7 +140,7 @@ class ClassifierConfig:
 
     classifier_type: str = "logistic_regression"
     tuning_method: Optional[str] = None
-    multilabel_strategy: str = "ovr"  # 'ovr' | 'chain'
+    multilabel_strategy: str = "native"  # 'native' | 'ovr' | 'chain'
     random_state: int = 42
     cv_folds: int = 3
     n_jobs: int = -1
